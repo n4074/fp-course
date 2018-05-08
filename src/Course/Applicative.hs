@@ -69,8 +69,7 @@ instance Applicative List where
     List (a -> b)
     -> List a
     -> List b
-  (<*>) Nil _ = Nil
-  (<*>) (f :. fs) a = (f <$> a) ++ (fs <*> a)
+  f <*> a = flatMap (`map` a) f
 
 -- | Insert into an Optional.
 --
@@ -93,8 +92,7 @@ instance Applicative Optional where
     Optional (a -> b)
     -> Optional a
     -> Optional b
-  (<*>) Empty _ = Empty
-  (<*>) (Full f) a = f <$> a
+  f <*> a = bindOptional . mapOptional
 
 -- | Insert into a constant function.
 --
@@ -123,7 +121,7 @@ instance Applicative ((->) t) where
     ((->) t (a -> b))
     -> ((->) t a)
     -> ((->) t b)
-  (<*>) f1 f2 = \x -> (f1 x) (f2 x)
+  (<*>) f g = \x -> (f x) (g x)
 
 
 -- | Apply a binary function in the environment.
@@ -151,7 +149,7 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 f = (<*>) . (fmap f)
+lift2 f a b= f <$> a <*> b
 
 -- | Apply a ternary function in the environment.
 -- /can be written using `lift2` and `(<*>)`./
@@ -183,7 +181,7 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 f a b c = (lift2 f a b) <*> c
+lift3 f a b c = lift2 f a b <*> c
 
 -- | Apply a quaternary function in the environment.
 -- /can be written using `lift3` and `(<*>)`./
@@ -216,16 +214,14 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 =
-  error "todo: Course.Applicative#lift4"
+lift4 f a b c d = lift3 f a b c <*> d
 
 -- | Apply a nullary function in the environment.
 lift0 ::
   Applicative f =>
   a
   -> f a
-lift0 =
-  error "todo: Course.Applicative#lift0"
+lift0 = pure 
 
 -- | Apply a unary function in the environment.
 -- /can be written using `lift0` and `(<*>)`./
@@ -243,8 +239,7 @@ lift1 ::
   (a -> b)
   -> f a
   -> f b
-lift1 =
-  error "todo: Course.Applicative#lift1"
+lift1 = (<$>)
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
