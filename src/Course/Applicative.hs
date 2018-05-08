@@ -92,7 +92,7 @@ instance Applicative Optional where
     Optional (a -> b)
     -> Optional a
     -> Optional b
-  f <*> a = bindOptional . mapOptional
+  f <*> a = bindOptional (`mapOptional` a) f
 
 -- | Insert into a constant function.
 --
@@ -264,8 +264,7 @@ lift1 = (<$>)
   f a
   -> f b
   -> f b
-(*>) =
-  error "todo: Course.Applicative#(*>)"
+f *> a = (flip const) <$> f <*> a
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -290,8 +289,7 @@ lift1 = (<$>)
   f b
   -> f a
   -> f b
-(<*) =
-  error "todo: Course.Applicative#(<*)"
+f <* a = const <$> f <*> a
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -313,8 +311,7 @@ sequence ::
   Applicative f =>
   List (f a)
   -> f (List a)
-sequence =
-  error "todo: Course.Applicative#sequence"
+sequence = foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -337,8 +334,7 @@ replicateA ::
   Int
   -> f a
   -> f (List a)
-replicateA =
-  error "todo: Course.Applicative#replicateA"
+replicateA n = sequence . replicate n
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -365,8 +361,8 @@ filtering ::
   (a -> f Bool)
   -> List a
   -> f (List a)
-filtering =
-  error "todo: Course.Applicative#filtering"
+filtering p = foldRight (\a accum -> lift2 (\b -> if b then (a:.) else id) (p a) accum) (pure Nil)
+
 
 -----------------------
 -- SUPPORT LIBRARIES --
